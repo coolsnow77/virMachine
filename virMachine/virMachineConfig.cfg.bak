@@ -1,0 +1,9 @@
+#default ceilometer config file
+
+[ceilometercfg]
+clyauthurl = http://10.66.32.18:35357/v2.0
+clymeterurl = http://10.66.32.18:8777/v2
+clyusername=admin 
+clypasswd = incito
+clytenantname = admin
+
