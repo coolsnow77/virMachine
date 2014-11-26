@@ -18,7 +18,8 @@ class ServiceBase(object):
         '''
         Constructor
         '''
-        filename ="%s/serviceConfig.cfg" %( '.' if len(os.path.dirname(__file__))== 0 else os.path.dirname(__file__))
+        #filename ="%s/serviceConfig.cfg" %( '.' if len(os.path.dirname(__file__))== 0 else os.path.dirname(__file__))
+        filename = "%s/serviceConfig.cfg"%(os.path.dirname(os.path.realpath(__file__)))
         ncInstance = serviceConfig.ServiceConfig(filename)
         self.url = ncInstance.nlyurl
         self.header = {'Content-Type': 'application/json', 

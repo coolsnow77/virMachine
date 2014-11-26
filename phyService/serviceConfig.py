@@ -5,7 +5,8 @@ import os
 
 class ServiceConfig(object):
 	def __init__(self, configFileName=None):
-		configFileName="%s/serviceConfig.cfg" %( '.' if len(os.path.dirname(__file__))== 0 else os.path.dirname(__file__))
+		#configFileName="%s/serviceConfig.cfg" %( '.' if len(os.path.dirname(__file__))== 0 else os.path.dirname(__file__))
+		configFileName = "%s/serviceConfig.cfg"%(os.path.dirname(os.path.realpath(__file__)))
 		try:
 			with open(configFileName) as fh:
 				for line in fh:
