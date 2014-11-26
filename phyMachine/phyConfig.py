@@ -17,7 +17,7 @@ class PhyConfig(object):
         if configFileName:
             fh = open(configFileName)
         else:
-            fh = open("%s/PhyConfig.cfg" %(os.path.dirname(__file__)))
+            fh = open("%s/PhyConfig.cfg" %(os.path.dirname(os.path.realpath(__file__))))
             for line in fh:
                 if line.startswith("#"):
                     continue

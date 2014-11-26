@@ -16,7 +16,7 @@ class PhyBase(object):
 	
 	def __init__(self, areaid=2000, hostip="192.168.1.5"):
 		" areaid  modify  when  you  create  areaHostIps.pk file "
-		self.fpk = "%s/areaHostIps.pk" %(zbconf.os.path.dirname(__file__))
+		self.fpk = "%s/areaHostIps.pk" %(zbconf.os.path.dirname(zbconf.os.path.realpath(__file__)))
 		cfg = zbconf.PhyConfig()
 		self.areaid = areaid
 		self.hostip = hostip
@@ -72,10 +72,8 @@ class PhyBase(object):
 			result = urllib2.urlopen(request)
 		except urllib2.URLError as e:
 			#print "Auth Failed, Please Check Your Name And Pass,%s" %e
-			print "Network  error! ", str(e)
-			#print "username or password  error!"
-			sys.exit(-1)
-			#return  -1
+			raise Exception("Network error!")
+			#sys.exit(-1)
 		else:
 			response = json.loads(result.read())
 			result.close()
@@ -91,11 +89,10 @@ class PhyBase(object):
 			result = urllib2.urlopen(request)
 		except urllib2.URLError as e:
 			if hasattr(e, 'reason'):
-				print "Network error!"
+				#print "Network error!"
+				raise Exception("connect  api server error!")
 				#print 'connect web server ：%s failed .'%(self.url)
-				#print 'Reason: ', e.reason
-				#return  -1
-				sys.exit(-1)
+				#sys.exit(-1)
 			elif hasattr(e, 'code'):
 				print 'The server could not fulfill the request.'
 				#print 'Error code: ', e.code
