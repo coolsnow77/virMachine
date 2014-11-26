@@ -4,15 +4,19 @@ Created on 2014年10月20日
 
 @author: cuimingwen
 '''
-
-import sys,os,urllib2, json, datetime, time, virMachineConfig 
+import sys
+import os 
+import urllib2
+import json
+import datetime
+import virMachineConfig 
 
 class VirBase(object):
     '''
       This is Ceilometer base Class
     '''
-
-
+    
+    
     def __init__(self, params=None, resource_id=None):
         '''
         Constructor
@@ -45,11 +49,10 @@ class VirBase(object):
         req = urllib2.Request(self.ctokenurl, params, self.cheader )
         try:
             result = urllib2.urlopen(req)
-        except urllib2.URLError as urlerr:
+        except urllib2.URLError:
             #print "url_ %s error: %s" %(self.ctokenurl, str(urlerr))
-            print "request  url  error!"
-            #return -1
-            sys.exit(-1)
+            #print "request  url  error!"
+            raise urllib2.URLError("request  url  error!")
         else:
             response = json.loads(result.read())
             result.close()
@@ -70,10 +73,10 @@ class VirBase(object):
         
         try:
             result = urllib2.urlopen(req)
-        except urllib2.URLError as urle:
-            #print " urlerr %s err: %s" %(self.cmeterurl, str(urle))
-            print "request  url error!"
-            return -1
+        except urllib2.URLError:
+            #print "request  url error!"
+            #return -1
+            raise urllib2.URLError("request  url error!")
         else:
             response = json.loads(result.read())
             result.close()
@@ -110,6 +113,10 @@ class VirBase(object):
         return rlt
     
     def getMeterSampleByName(self, mkey=''):
+        """ get monitor meter by monitor key
+        :param mkey: the monitor key
+        :return  a list or -1 if not get data
+        """
         ' sample 是每个采集时间点上meter对应的值'
         
         urlsample= self.cmeterurl + '/' + mkey + '?q.field=resource_id&q.value=' + self.resource_id +'&limit=1' 
@@ -212,7 +219,6 @@ class VirBase(object):
             print " error: %s" %(str(nerr))
             return -1        
         
-
     def getResources(self):
         ''' get resources 
             Retrieve definitions of all of the resources
