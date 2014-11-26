@@ -5,7 +5,8 @@ import os
 
 class VirMachineConfig(object):
 	def __init__(self, configFileName=None):
-		configFileName="%s/virMachineConfig.cfg" %( '.' if len(os.path.dirname(__file__))== 0 else os.path.dirname(__file__))
+		#configFileName="%s/virMachineConfig.cfg" %( '.' if len(os.path.dirname(__file__))== 0 else os.path.dirname(__file__))
+		configFileName = "%s/virMachineConfig.cfg"%(os.path.dirname(os.path.realpath(__file__)))
 		try:
 			with open(configFileName) as fh:
 				for line in fh:

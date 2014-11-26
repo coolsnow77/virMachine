@@ -21,7 +21,8 @@ class VirBase(object):
         '''
         Constructor
         '''
-        filename ="%s/virMachineConfig.cfg" %( '.' if len(os.path.dirname(__file__))== 0 else os.path.dirname(__file__))
+        #filename ="%s/virMachineConfig.cfg" %( '.' if len(os.path.dirname(__file__))== 0 else os.path.dirname(__file__))
+        filename = "%s/virMachineConfig.cfg"%(os.path.dirname(os.path.realpath(__file__)))
         ccInstance = virMachineConfig.VirMachineConfig(filename)
         self.curl = ccInstance.clyauthurl
         self.cmeter = ccInstance.clymeterurl
