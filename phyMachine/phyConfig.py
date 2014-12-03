@@ -11,8 +11,9 @@
 #===============================================================================
 
 import os
+import ConfigParser
 
-class PhyConfig(object):
+class PhyConfig2(object):
     def __init__(self, configFileName=None):
         if configFileName:
             fh = open(configFileName)
@@ -26,7 +27,33 @@ class PhyConfig(object):
                     if len(content) == 2:
                         setattr(self, content[0], content[1])
             
-    
+
+class PhyConfig(object):
+    def __init__(self, configFileName=None):
+        conf = ConfigParser.ConfigParser()
+        if configFileName is None:
+            conf.read("{0}/PhyConfig.cfg".format(os.path.dirname\
+												(os.path.realpath(__file__))))
+        else:
+            conf.read("{0}/".format(os.path.dirname\
+									(os.path.realpath(__file__)))+configFileName)
+        #print conf.sections()
+        self.conf = conf
+        for sect in conf.sections():
+            dv = dict(conf.items(sect))
+            for k, v in dv.items():
+                setattr(self, k, v)
+
+    def get(self, section, key):
+        return self.conf.get(section, key)	
+        
+
+        
 if __name__ == '__main__':
     ZC = PhyConfig()
     print ZC.zmsurl, ZC.zmsuser, ZC.zmspasswd
+    tt = PhyConfig('PhyConfig.cfg')
+    print  tt.zmsurl, tt.zmsuser, repr(tt.zxyurl)
+
+    tt3 = PhyConfig()
+    print tt3.get('zmeishancfg', 'zmsurl')
