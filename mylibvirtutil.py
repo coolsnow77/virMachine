@@ -4,6 +4,10 @@ Created on 2014年12月2日
 
 @author: cuimingwen
 '''
+#  install   package as  followed
+#  pip install  xmltodict
+#  apt-get  -y  install  libguestfs-tools
+#  sudo  vim  /etc/sudoer  ,  last line  add "zabbix ALL=NOPASSWD:ALL"
 import sys
 
 from time import sleep
@@ -169,19 +173,28 @@ class VirtMetrics(object):
             cmd = 'sudo virt-df -d `virsh domuuid %d`' % (domid)
             df = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
             outputs = df.stdout.readlines()
+            # print outputs
             list_disk = outputs[2].strip().split()
-            d0 = int(list_disk[0])
-            d1 = int(list_disk[1])
-            d2 = int(list_disk[2])
+            d0 = int(list_disk[0]) * 1000
+            d1 = int(list_disk[1]) * 1000
+            d2 = int(list_disk[2]) * 1000
             d3 = float('%.4f' % (float(d1)/float(d0)))
-            disk_dict = {'total': {0},
-                         'used': {1},
-                         'available': {2},
-                         'userpercent': {3}}.format(d0, d1,
-                                                    d2, d3)
+            disk_dict = {'total': d0,
+                         'used': d1,
+                         'available': d2,
+                         'userpercent': d3}
             return disk_dict
         except Exception as e:
             raise ValueError(str(e))
+
+    # cut it
+    def get_disk2(self, ip=None):
+        " Get disk info from virt-df"
+        dom_id = self.__get_domain_id_by_ip(ip)
+        if dom_id is None:
+            raise libvirtError("domain id or ip not exist")
+        d_info = self.__get_disk_info(dom_id)
+        return d_info
 
     def __get_disk_info2(self, ip=None):
         " Get  disk  from  libvirt"
@@ -227,12 +240,14 @@ class VirtMetrics(object):
         if dom_id is None:
             raise libvirtError("domain id or ip not exist")
         mydom = self.conn.lookupByID(dom_id)
-        net_info1 = {'rx_bytes': mydom.interfaceStats('vnet0')[0],
-                     'tx_bytes': mydom.interfaceStats('vnet0')[4]}
+        nkey = 'domid_' + str(dom_id)
+        np = self.get_libvirt_path()[nkey]['interfacePath']
+        net_info1 = {'rx_bytes': mydom.interfaceStats(np)[0],
+                     'tx_bytes': mydom.interfaceStats(np)[4]}
         sleep(interval)
 
-        net_info2 = {'rx_bytes': float(mydom.interfaceStats('vnet0')[0]),
-                     'tx_bytes': float(mydom.interfaceStats('vnet0')[4])}
+        net_info2 = {'rx_bytes': float(mydom.interfaceStats(np)[0]),
+                     'tx_bytes': float(mydom.interfaceStats(np)[4])}
         net_info = self.__union_dict(interval, net_info2, net_info1)
         return net_info
 
@@ -296,22 +311,35 @@ class VirtMetrics(object):
         net_t = float('{:.4f}'.format(total))
         return net_t
 
-    def get_disk_root_free(self):
+    def get_disk_root_free(self, ip=None):
         " disk root free"
-        pass
+        dom_id = self.__get_domain_id_by_ip(ip)
+        if dom_id is None:
+            raise libvirtError("domain id or ip not exist")
+        disk_free = self.__get_disk_info(dom_id)
+        return disk_free.get('available', 0)
 
-    def get_disk_root_pfree(self):
+    def get_disk_root_pfree(self, ip=None):
         " disk root free percentage "
-        pass
+        dom_id = self.__get_domain_id_by_ip(ip)
+        if dom_id is None:
+            raise libvirtError("domain id or ip not exist")
+        disk_pfree = self.__get_disk_info(dom_id)
+        rlt = 1 - disk_pfree.get('userpercent', 0)
+        return rlt
 
     def get_disk_root_total(self, ip=None):
         " disk root total size, capacity "
         disk_info = self.__get_disk_info2(ip)
         return disk_info[0]
 
-    def get_disk_root_used(self):
+    def get_disk_root_used(self, ip=None):
         " disk root used size "
-        pass
+        dom_id = self.__get_domain_id_by_ip(ip)
+        if dom_id is None:
+            raise libvirtError("domain id or ip not exist")
+        disk_pfree = self.__get_disk_info(dom_id)
+        return disk_pfree.get('used', 0)
 
     def get_disk_read_bytes_rate(self, ip=None):
         " disk read bytes rate "
@@ -341,16 +369,16 @@ if __name__ == '__main__':
         raise libvirtError("Not enough  arguments, argv >=3")
     else:
         command, ip = sys.argv[1], sys.argv[2]
-        print command, ip
+        # print command, ip
         tt = VirtIPHost()
-        print tt.get_ips
+        # print tt.get_ips
         t = VirtMetrics()
         t.init_memory_period()
         # print t.get_cpu_util()
-        print t.get_libvirt_path()
+        # print t.get_libvirt_path()
         # print dir(t)
         tmp_com = 'get_' + str(command).replace('.', '_')
-        print tmp_com
+        # print tmp_com
         if tmp_com in dir(t):
             # com_str = 't.' + str(tmp_com) + '(' + str(ip) + ')'
             com_str = ''.join(['t.', str(tmp_com), '("', ip, '")'])
