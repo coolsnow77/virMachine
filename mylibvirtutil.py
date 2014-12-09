@@ -104,12 +104,14 @@ class VirtMetrics(object):
     def init_memory_period(self):
         " Init  memory  period "
         domid_list = self.__get_list_domain_id()
+        if len(domid_list) < 1:
+            raise libvirtError("not instance run ")
         for did in domid_list:
             cmd = "virsh  dommemstat {0} --period 1000".format(did)
             fp = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
             outputs = [item.strip() for item in fp.stdout.readlines()]
             # print outputs
-        return outputs
+        return None
 
     def get_libvirt_path(self):
         " path is vda, vnet0, or mac "
@@ -279,7 +281,6 @@ class VirtMetrics(object):
     def get_memory_total(self, ip=None):
         " total memory"
         m_info = self.__get_mem_info(ip)
-        print m_info
         return (m_info.get('actual', 0)) * 1000
 
     def get_memory_available(self, ip=None):
