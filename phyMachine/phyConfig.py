@@ -18,7 +18,7 @@ class PhyConfig2(object):
         if configFileName:
             fh = open(configFileName)
         else:
-            fh = open("%s/PhyConfig.cfg" %(os.path.dirname(os.path.realpath(__file__))))
+            fh = open("%s/phyConfig.cfg" %(os.path.dirname(os.path.realpath(__file__))))
             for line in fh:
                 if line.startswith("#"):
                     continue
@@ -32,7 +32,7 @@ class PhyConfig(object):
     def __init__(self, configFileName=None):
         conf = ConfigParser.ConfigParser()
         if configFileName is None:
-            conf.read("{0}/PhyConfig.cfg".format(os.path.dirname\
+            conf.read("{0}/phyConfig.cfg".format(os.path.dirname\
 												(os.path.realpath(__file__))))
         else:
             conf.read("{0}/".format(os.path.dirname\
