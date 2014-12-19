@@ -1,0 +1,22 @@
+#1. 将API.php 拷贝到/var/www/zabbix/include/classes/
+#2. 将CTrends.php 拷贝到/var/www/zabbix/api/classes/ 目录下
+
+#!/bin/bash
+# zabbix 2.2.x 
+apiphp='/var/www/zabbix/include/classes'
+trends='/var/www/zabbix/api/classes'
+
+cp $apiphp/API.php  $apiphp/API.php.bak
+cp  -Rf API.php  $apiphp/API.php
+
+cp CTrends.php $apiphp/
+
+cp CTrends_uint.php $apiphp/
+
+
+# zabbix 2.4.2
+
+cp  CTrends.php2.4.2  /var/www/html/zabbix/include/classes/api/services/CTrends.php
+cp  CTrends_uint.php2.4.2  /var/www/html/zabbix/include/classes/api/services/CTrends_uint.php
+cp  API2.4.2.php     /var/www/html/zabbix/include/classes/api/API.php
+cp  CApiServiceFactory.php  /var/www/html/zabbix/include/classes/api/CApiServiceFactory.php
