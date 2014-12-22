@@ -122,7 +122,17 @@ class VirtMetrics(object):
             xmlStr = myDom.XMLDesc()
             rlt = dict(xmltodict.parse(xmlStr)['domain'])
             com_d = dict(rlt['devices']['interface'])
-            dPath = dict(rlt['devices']['disk'])['target']['@dev']
+            # disk path  validate     
+            if isinstance(rlt['devices']['disk'], list):
+                for i in rlt['devices']['disk']:
+                    if '@file' in dict(i).get('source', 0):
+                        dPath = dict(i)['target']['@dev']
+                        break
+                    else:
+                        dPath = dict(i)['target']['@dev'] 
+            else:
+                dPath = dict(rlt['devices']['disk'])['target']['@dev']
+            # dPath = dict(rlt['devices']['disk'])['target']['@dev']
             interPath = com_d['target']['@dev']
             interfaceRef = com_d['filterref']['@filter']
             macstring = com_d['mac']['@address']
@@ -365,7 +375,10 @@ class VirtMetrics(object):
         return self.__class__
 
 if __name__ == '__main__':
-    # print sys.argv[0], sys.argv[1], sys.argv[2]
+    #fh = open("/tmp/vim1.log", "wb")
+    #print sys.argv[0], sys.argv[1], sys.argv[2]
+    #fh.write("%s-%s-%s" %(sys.argv[0], sys.argv[1], sys.argv[2]))
+    #fh.close()
     if len(sys.argv) < 3:
         raise libvirtError("Not enough  arguments, argv >=3")
     else:
