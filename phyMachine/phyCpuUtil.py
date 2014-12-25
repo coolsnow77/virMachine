@@ -60,11 +60,13 @@ class PhyCpuUtil(PhyBase):
         processload15min = self.getLastValue(self.hid, 'system.cpu.load[percpu,avg15]')
         return processload15min
     
-    def getMKByHostid(self):
+    def getMonitorKeys(self):
         ' get monitor key by host id'
-        return self.getMonitorKeyByHostid(self.hid)
+        rlt = self.getMonitorKeyByHostid(self.hid)
+        mkeys = [v['key_'] for v in rlt]
+        return mkeys
     
-    def getValueByMonirotKey(self,  mkey=None):
+    def getValueByMonitorKey(self,  mkey=None):
         " get Value by Monitor Key"
         v = self.getLastValue(self.hid, mkey)
         return v
@@ -78,7 +80,10 @@ class PhyCpuUtil(PhyBase):
         timeFrom = int(timeFrom)
         timeEnd = int(timeEnd)
         #print type(timeFrom), timeFrom, timeEnd
-        if (timeEnd - timeFrom) < 10800:  
+        if timeEnd <= timeFrom:
+            return {"errmsg": "startTime  must be le endtime", "errrlt": -1}
+        if (timeEnd - timeFrom) <= 10800: 
+            "Hope never goes here " 
             # 3h = 10800 
             v = self.getPeriodValue(self.hid, mkey, timeFrom, timeEnd)
             return v
@@ -118,7 +123,8 @@ if __name__ == '__main__':
         if memethod.startswith("getCpu"):
             t11  = "t."+ str(memethod) + "()"
             print str(memethod), eval(t11)
-    for k in t.getMKByHostid():
-        print k['key_']
-        print t.getValueByMonirotKey(k['key_'])
-        print t.getTrendsValue(k['key_'], t1, t2)
+    print t.getMonitorKeys()
+    for k in t.getMonitorKeys():
+        print k
+        # print t.getValueByMonirotKey(k)
+        # print t.getTrendsValue(k['key_'], t1, t2)

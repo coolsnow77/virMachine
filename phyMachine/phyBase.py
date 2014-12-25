@@ -74,10 +74,8 @@ class PhyBase(object):
 			request.add_header(key,self.header[key])
 		try:
 			result = urllib2.urlopen(request)
-		except urllib2.URLError as e:
-			#print "Auth Failed, Please Check Your Name And Pass,%s" %e
+		except urllib2.URLError:
 			raise Exception("Network error!")
-			#sys.exit(-1)
 		else:
 			response = json.loads(result.read())
 			result.close()
@@ -93,13 +91,9 @@ class PhyBase(object):
 			result = urllib2.urlopen(request)
 		except urllib2.URLError as e:
 			if hasattr(e, 'reason'):
-				#print "Network error!"
 				raise Exception("connect  api server error!")
-				#print 'connect web server ：%s failed .'%(self.url)
-				#sys.exit(-1)
 			elif hasattr(e, 'code'):
 				print 'The server could not fulfill the request.'
-				#print 'Error code: ', e.code
 			return  -1
 		else:
 			response = json.loads(result.read())
@@ -127,7 +121,6 @@ class PhyBase(object):
 		else:
 			print "get hostip list  failed"
 			return -1
-	
 
 	def getHostId(self,hostip):
 		''' get host ip id '''
@@ -188,12 +181,21 @@ class PhyBase(object):
 			print "no such the monitorItem Key:%s" %mkey
 			return -1
 
+	def _checkExcludeKey(self, excludeKeyList, mkey):
+		""" Check mkey  is  in my scope
+		"""
+		# excludeKey = ['hostname', 'uname', 'version']
+		rlt = [0  for k in excludeKeyList if k in mkey ]
+		if len(rlt)>0:
+			return True
+		else:
+			return False
+
 	def getLastValue(self,hostid, mkey):
 		""" 	get last value of item id 
 			hostid:  monitor host id
 			 mkey : monitor key
 		"""
-		
 		data = json.dumps(
 			{
 			    "jsonrpc": "2.0",
@@ -218,15 +220,14 @@ class PhyBase(object):
 		#res = self.getData(data)['result']
 		res = req['result']
 		if (res != 0) and (len(res) != 0):
-			if 'hostname' in mkey:
-				return res
-			elif 'uname' in mkey:
-				return res
-			elif 'version' in mkey:
-				return res
+			resRlt = {'lastvalue': res[0]['lastvalue'],
+					   'lastclock': int(res[0]['lastclock'])}
+			excludeKeyList = ['hostname', 'uname', 'version'] 
+			if self._checkExcludeKey(excludeKeyList, mkey):
+				return resRlt
 			else:
 				return {"lastvalue": float("%.4f"%(float(res[0]['lastvalue']))),
-				                 'lastclock':int(res[0]['lastclock'])}
+				        'lastclock':int(res[0]['lastclock'])}
 		else:
 			if mkey.startswith('system.cpu.load'):
 				return self.getLastValueE(hostid, mkey)
@@ -264,8 +265,8 @@ class PhyBase(object):
 			})
 		res2 = self.getData(data)['result']
 		if (res2 != 0) and (len(res2) != 0):
-			return [{"lastvalue": float("%.4f"%(float(res2[0]['lastvalue']))),
-				                'lastclock':int(res2[0]['lastclock'])}]
+			return {"lastvalue": float("%.4f"%(float(res2[0]['lastvalue']))),
+				     'lastclock':int(res2[0]['lastclock'])}
 		else:	
 			msg =  "valueE no such  monitor key value:%s"%(mkey)
 			return {"errmsg": msg, "errrlt": -1}
@@ -274,7 +275,6 @@ class PhyBase(object):
 		""" 	get Monitor key by hostid
 			hostid:  monitor host id
 		"""
-		
 		data = json.dumps(
 			{
 			    "jsonrpc": "2.0",
@@ -346,13 +346,14 @@ class PhyBase(object):
 		timeFrom = int(timefrom)
 		timeUntil = int(timeuntil)
 		
-		if mkey.find('cpu') !=-1:
+		excludeKeyList = ['cpu', 'pfree']
+		
+		if self._checkExcludeKey(excludeKeyList, mkey):
 			methodh = 'trends.get'
 			historyFlag = 0
 		else:
 			methodh = 'trends_uint.get'
 			historyFlag =3
-		# print timeFrom, timeUntil
 		#print methodh
 		data = json.dumps(
 			{
@@ -370,13 +371,12 @@ class PhyBase(object):
 			    "auth": self.authID,
 			    "id": 1
 			})
-		# print self.getData(data)
+		# print self.getData(data), methodh
 		if "error" in  self.getData(data):
 			raise ValueError(self.getData(data)['error'])
 		res = self.getData(data)['result']
 		if (res != 0) and (len(res) != 0):
 			return  self.listDictCompre(res,historyFlag)
-			#return res
 		else:
 			msg = "get trends key :%s value error:"%mkey
 			return {"errmsg": msg, "errrlt": -1}		
@@ -464,7 +464,6 @@ class PhyBase(object):
 		"""
 		pass 
 	
-		
 	def checkValidHost(self, hostip=None):
 		"check  monitor hostip valid or not "
 		hostDictIter = self.read_records(self.fpk)
