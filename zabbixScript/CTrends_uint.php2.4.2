@@ -142,9 +142,9 @@ class CTrends_uint extends CApiService {
 		}
 
 		// should be last, after all ****IDS checks
-		if (!$nodeCheck) {
-			$sqlParts['where'] = sqlPartDbNode($sqlParts['where'], 'h.itemid', $nodeids);
-		}
+		#if (!$nodeCheck) {
+		#	$sqlParts['where'] = sqlPartDbNode($sqlParts['where'], 'h.itemid', $nodeids);
+		#}
 
 		// time_from
 		if (!is_null($options['time_from'])) {
