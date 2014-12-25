@@ -144,8 +144,8 @@ class PhyBase(object):
 		if (res != 0) and (len(res) != 0):
 			return str(([ hostid['hostid'] for hostid in res])[0])
 		else:
-			print "get hostid :%s failed" %(hostip)
-			return -1
+			msg = "get hostid :%s failed" %(hostip)
+			raise ValueError(msg)
 
 	def getItemId(self,hostid, mkey):
 		""" 	get monitor item id 
@@ -346,7 +346,8 @@ class PhyBase(object):
 		timeFrom = int(timefrom)
 		timeUntil = int(timeuntil)
 		
-		excludeKeyList = ['cpu', 'pfree']
+		excludeKeyList = ['cpu', 'pfree', 'rate', 'libvirt.vm.status[net',
+						  'libvirt.vm.status[disk.root.free']
 		
 		if self._checkExcludeKey(excludeKeyList, mkey):
 			methodh = 'trends.get'
