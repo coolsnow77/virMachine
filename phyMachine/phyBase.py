@@ -14,17 +14,21 @@ class PhyBase(object):
 	   JSCONRPC API zabbix interface
 	"""
 	
-	def __init__(self, areaid=2000, hostip="192.168.1.5"):
+	def __init__(self, areaid=1000, hostip="192.168.1.5"):
 		" areaid  modify  when  you  create  areaHostIps.pk file "
 		self.fpk = "%s/areaHostIps.pk" %(zbconf.os.path.dirname(zbconf.os.path.realpath(__file__)))
 		cfg = zbconf.PhyConfig()
 		self.areaid = areaid
 		self.hostip = hostip
-		self.areaid = self.checkValidHost(hostip=self.hostip)
+		#self.areaid = self.checkValidHost(hostip=self.hostip)
 		if self.areaid == 1000:
-			self.url = cfg.zmsurl
-			self.user = cfg.zmsuser
-			self.passwd = cfg.zmspasswd
+			#self.url = cfg.zmsurl
+			#self.user = cfg.zmsuser
+			#self.passwd = cfg.zmspasswd
+
+			self.url = cfg.zlyurl
+			self.user = cfg.zlyuser
+			self.passwd = cfg.zlypasswd
 		elif self.areaid == 2000:
 			self.url = cfg.zksurl
 			self.user = cfg.zksuser
@@ -229,8 +233,8 @@ class PhyBase(object):
 			elif mkey.startswith('net.if'):
 				return self.getLastValueE(hostid, mkey)
 			else:	
-				print "no such  monitor key:%s value"%(mkey)
-				return -1
+				msg = "no such  monitor key:%s value"%(mkey)
+				return {"errmsg": msg, "errrlt": -1}
 	
 	def getLastValueE(self,hostid, mkey):
 		""" 	get last value of item id 
@@ -263,8 +267,8 @@ class PhyBase(object):
 			return [{"lastvalue": float("%.4f"%(float(res2[0]['lastvalue']))),
 				                'lastclock':int(res2[0]['lastclock'])}]
 		else:	
-			print "valueE no such  monitor key value:%s"%(mkey)
-			return -1
+			msg =  "valueE no such  monitor key value:%s"%(mkey)
+			return {"errmsg": msg, "errrlt": -1}
 		
 	def getMonitorKeyByHostid(self,hostid):
 		""" 	get Monitor key by hostid
@@ -291,12 +295,10 @@ class PhyBase(object):
 		#res = self.getData(data)['result']
 		res = req['result']
 		if (res != 0) and (len(res) != 0):
-			#return {"lastvalue": float("%.4f"%(float(res[0]['lastvalue']))),
-				                 #'lastclock':int(res[0]['lastclock'])}
-		    return [{'itemid':k['itemid'], 'key_': k['key_']} for k in res ]
+			return [{'itemid':k['itemid'], 'key_': k['key_']} for k in res ]
 		else:
-			print "get monitor key failed" 
-			return -1	
+			# print "get monitor key failed" 
+			return {"errmsg": "get monitor key failed", "errrlt": -1}	
 	
 	def getPeriodValue(self,hostid, mkey, timefrom, timeuntil):
 		""" 	get  Value for a period 
@@ -329,11 +331,10 @@ class PhyBase(object):
 		if (res != 0) and (len(res) != 0):
 			return  self.listDictCompre(res)
 		else:
-			print "get period key :%s value error:"%mkey
-			return -1
+			msg = "get period key :%s value error:"%mkey
+			return {"errmsg": msg, "errrlt": -1}
 
-
-    # get trends data 
+	# get trends data 
 	def getPeriodValue2(self,hostid, mkey, timefrom, timeuntil):
 		""" 	get  Value for a period 
 			hostid:  int  monitor host id
@@ -369,13 +370,16 @@ class PhyBase(object):
 			    "auth": self.authID,
 			    "id": 1
 			})
+		# print self.getData(data)
+		if "error" in  self.getData(data):
+			raise ValueError(self.getData(data)['error'])
 		res = self.getData(data)['result']
 		if (res != 0) and (len(res) != 0):
 			return  self.listDictCompre(res,historyFlag)
 			#return res
 		else:
-			print "get period key :%s value error:"%mkey
-			return -1		
+			msg = "get trends key :%s value error:"%mkey
+			return {"errmsg": msg, "errrlt": -1}		
 	
 	def listDictCompre(self, myList, flag=0):
 		""" find the value, clock value in dict,
@@ -398,8 +402,7 @@ class PhyBase(object):
 					itemD[k] = int(v) if flag else float("%.4f"%(float(v)))
 				elif k == 'value_avg':
 					itemD[k] = int(v) if flag else float("%.4f"%(float(v)))
-				
-				myL.append(itemD)
+			myL.append(itemD)
 		return myL
 	
 		
@@ -517,7 +520,7 @@ class PhyBase(object):
 	
 def main():
 	#hip = "192.168.43.204"
-	hip = "10.66.49.19"
+	hip = "10.66.32.19"
 	#Z = PhyBase(hostip="10.66.49.19")
 	Z = PhyBase(hostip=hip)
 	print Z
