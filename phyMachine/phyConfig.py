@@ -18,7 +18,8 @@ class PhyConfig2(object):
         if configFileName:
             fh = open(configFileName)
         else:
-            fh = open("%s/phyConfig.cfg" %(os.path.dirname(os.path.realpath(__file__))))
+            fh = open("%s/phyConfig.cfg" %(os.path.dirname(
+					   os.path.realpath(__file__))))
             for line in fh:
                 if line.startswith("#"):
                     continue
@@ -32,11 +33,11 @@ class PhyConfig(object):
     def __init__(self, configFileName=None):
         conf = ConfigParser.ConfigParser()
         if configFileName is None:
-            conf.read("{0}/phyConfig.cfg".format(os.path.dirname\
-												(os.path.realpath(__file__))))
+            conf.read("{0}/phyConfig.cfg".format(os.path.dirname(
+						 os.path.realpath(__file__))))
         else:
-            conf.read("{0}/".format(os.path.dirname\
-									(os.path.realpath(__file__)))+configFileName)
+            conf.read("{0}/".format(os.path.dirname(
+				    os.path.realpath(__file__)))+configFileName)
         #print conf.sections()
         self.conf = conf
         for sect in conf.sections():
@@ -52,8 +53,20 @@ class PhyConfig(object):
 if __name__ == '__main__':
     ZC = PhyConfig()
     print ZC.zmsurl, ZC.zmsuser, ZC.zmspasswd
-    tt = PhyConfig('PhyConfig.cfg')
+    tt = PhyConfig('phyConfig.cfg')
     print  tt.zmsurl, tt.zmsuser, repr(tt.zxyurl)
 
     tt3 = PhyConfig()
     print tt3.get('zmeishancfg', 'zmsurl')
+    print " openstack db info set "
+    print tt3.get('lyosdbinfo', 'dbhost')
+    print tt3.get('lyosdbinfo', 'dbuser')
+    print tt3.get('lyosdbinfo', 'dbpass')
+    print tt3.get('lyosdbinfo', 'dbname')
+    print "openstack  computer auth info"
+    print tt3.get('lyopenstackinfo', 'osusername')
+    print tt3.get('lyopenstackinfo', 'ospassword')
+    print tt3.get('lyopenstackinfo', 'ostenantname')
+    print tt3.get('lyopenstackinfo', 'osauthurl')
+
+    
