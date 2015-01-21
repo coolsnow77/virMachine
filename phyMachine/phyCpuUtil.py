@@ -91,6 +91,56 @@ class PhyCpuUtil(PhyBase):
             #print "goes here!", mkey
             v = self.getPeriodValue2(self.hid, mkey, timeFrom, timeEnd)
             return v
+
+    def getHostipFromVip(self, vip):
+        '''
+        Get host ip from virtual ip
+        @param vip string virtual ip addr
+        return hostip string
+        '''
+        rlt = self.getHipFromVip(vip)
+        return rlt
+
+    def get_all_hosts(self):
+        '''
+        Get all host ip address
+        return map
+        for example:
+        {'phy': [u'Zabbix server',
+         u'10.66.32.67_vm',
+         u'10.66.32.21_snmp',
+         u'10.66.32.19',
+         u'10.66.32.22',
+         u'10.66.32.18',
+         u'10.66.32.20'],
+         'sw': [],
+         'vm': [u'10.66.32.67', u'10.66.32.68']}
+         
+         phy:--  physical machine  ip address
+         sw:--   switches  or routers
+         vm:--   virtual machine ip address
+         '''
+        rlt = self.getAllHost()
+        return rlt
+
+    def create_vm_monitor(self, vip, tpname='Template Libvirt VM Status'):
+        '''
+        Create virtual machine monitor
+        @param vip string virtual ip addr
+        @param hip string host ip addr
+        @param tpname string template name
+        '''
+        hip = self.getHostipFromVip(vip)
+        rlt = self.createVMMonitor(vip, hip, tpname)
+        return rlt
+
+    def delete_vm_monitor(self, vip):
+        '''
+        Delete virtual machine monitor
+        @param vip virtual ip addr
+        '''
+        rlt = self.deleteVMMonitor(vip)
+        return rlt
     
     def __repr__(self):
         #return ('<PhyCpuUtil  %s>') %(getattr(self,'cpusyskey', 'unknown'))

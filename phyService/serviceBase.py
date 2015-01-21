@@ -48,7 +48,14 @@ class ServiceBase(object):
             response = json.loads(result.read())
             result.close()
             return response
-        
+   
+    def getAllHost(self):
+        rlt = self.urlRequest(self.hObjects)
+        if rlt['success']:
+            return rlt['content'].keys()
+        else:
+            return -1
+    
     def getHostData(self):
         ' get Host info '
         hostUrl = self.nHost +'/' + self.hostip

@@ -6,6 +6,7 @@ import sys,re,json,cPickle,urllib2
 from time import mktime, strptime, strftime,localtime
 
 import phyConfig as  zbconf
+import getVipAndPhyip 
 
 
 class PhyBase(object):
@@ -20,6 +21,19 @@ class PhyBase(object):
 		cfg = zbconf.PhyConfig()
 		self.areaid = areaid
 		self.hostip = hostip
+		# openstack db info
+		self.osdbhost = cfg.get('lyosdbinfo', 'dbhost')
+		self.osdbuser = cfg.get('lyosdbinfo', 'dbuser')
+		self.osdbpass = cfg.get('lyosdbinfo', 'dbpass')
+		self.osdbname = cfg.get('lyosdbinfo', 'dbname')
+		self.osdbport = int(cfg.get('lyosdbinfo', 'dbport'))
+		
+		# openstack auth info
+		self.osusername = cfg.get('lyopenstackinfo', 'osusername')
+		self.ospassword = cfg.get('lyopenstackinfo', 'ospassword')
+		self.ostenantname = cfg.get('lyopenstackinfo', 'ostenantname')
+		self.osauthurl = cfg.get('lyopenstackinfo', 'osauthurl')
+		
 		#self.areaid = self.checkValidHost(hostip=self.hostip)
 		if self.areaid == 1000:
 			#self.url = cfg.zmsurl
@@ -43,6 +57,24 @@ class PhyBase(object):
 			self.passwd = cfg.zxypasswd
 		self.header = {"Content-Type": "application/json"}
 		self.authID = self.userLogin()
+
+	def getHipFromVip(self, vip):
+		'''
+		get openstack computer ip from virtual ip
+		@param vip string virtual ip addr
+		'''
+		# init VipAndIp Class
+		vip_and_ip_instance = getVipAndPhyip.IpAndVip(
+								user = self.osusername,
+								password = self.ospassword,
+                 				tenantName = self.ostenantname,
+                 				url = self.osauthurl,
+                 	   			dbhost = self.osdbhost,
+                 	   			dbname = self.osdbname,
+                 	   			dbuser = self.osdbuser,
+                 	      		dbpass = self.osdbpass,
+                 	      		dbport = self.osdbport)
+		return vip_and_ip_instance.get_host_ip_from_vip(vip)
 		
 
 	def timestamp2Date(self,timeStamp):
@@ -82,7 +114,7 @@ class PhyBase(object):
 			authID = response['result']
 			return authID
 
-	def getData(self,data,hostip=""):
+	def getData(self,data, hostip=""):
 		''' get json rpc data '''
 		request = urllib2.Request(self.url,data)
 		for key in self.header:
@@ -102,22 +134,43 @@ class PhyBase(object):
 
 
 	def getAllHost(self):
-		''' get all host ip '''
+		''' 
+		Get all host ip 
+		Linux servers  for physical machine groups
+		Libvirt VMS    for virtual machine groups
+		Switches	       for switches, Routers 
+		'''
 		data = json.dumps(
 			{
 			    "jsonrpc": "2.0",
 			    "method": "host.get",
 			    "params": {
-				"output":["hostid","name","status","host"],
-				"filter" : ['Zabbix server', 'Linux server', 'Meishang']
+				"output":["hostid","name","status","host", "groups"],
+				"selectGroups": "extend",
+				# "filter" : ['Zabbix server', 'Linux server', 'Meishang']
 				},
 			    "auth": self.authID,
 			    "id": 1
 			})
 		res = self.getData(data)['result']
 		if (res != 0) and (len(res) != 0):
-			hostList = [ r['host'] for r in res ]
-			return  hostList
+			print res
+			hostList = [[r['host'], r['groups'][0]['name']]  for r in res
+					     if r['status'] == '0']
+			# resDict = {'phy': [], 'vm': [], 'sw': []}
+			phy, vm, sw= [], [], []
+			hostDict = dict(hostList)
+			for k, v in hostDict.items():
+				if v in 'Linux servers':
+					phy.append(k)
+				elif v in 'Libvirt VMS':
+					vm.append(k)
+				elif v in 'Switches':
+					vm.append(k)
+				else:
+					phy.append(k)
+			hD = {'phy': phy, 'vm': vm, 'sw': sw}
+			return  hD
 		else:
 			print "get hostip list  failed"
 			return -1
@@ -513,17 +566,161 @@ class PhyBase(object):
 				return str('%.4f%s'%(fnum,u))
 			fnum /=basenum
 		return str('%.3f%s'%(fnum, 'TB'))
+	
+	def getHostGroupid(self, groupname='Linux servers'):
+		'''
+		Get hostGroup id
+		@param groupname string
+		'''
+		data = json.dumps(
+				{
+				 	"jsonrpc": "2.0",
+					 "method": "hostgroup.get",
+					 "params": {
+							"output": "extend",
+							"filter": {
+									"name": [
+											groupname
+											]
+									}
+							 },
+				     "auth": self.authID,
+			         "id": 1					 
+				})
+		if "error" in  self.getData(data):
+			raise ValueError(self.getData(data)['error'])
+		res = self.getData(data)['result']
+		if (res != 0) and (len(res) != 0):
+			out = {item: res[0][item] for item in res[0] if item in['name', 'groupid']}
+			return  out
+		else:
+			msg = "get host group id:{} error".format(groupname)
+			return {"errmsg": msg, "errrlt": -1}		
+
+	def getTemplateid(self, tempname='Template OS Linux'):
+		'''
+		Get TemplateId
+		@param tempname, string template name
+		'''
+		data = json.dumps(
+				{
+				 "jsonrpc": "2.0",
+				 "method": "template.get",
+				 "params":{
+					 "output": "extend",
+					 "filter":{
+							"host": [
+								"Template OS Linux",
+								 tempname
+								]
+							}
+						},
+			    "auth": self.authID,
+			    "id": 1				
+				})
+		if "error" in  self.getData(data):
+			raise ValueError(self.getData(data)['error'])
+		res = self.getData(data)['result']
+		if (res != 0) and (len(res) != 0):
+			out = {item: res[0][item] for item in res[0] if item in['name', 'templateid']}
+			return  out
+		else:
+			msg = "get template id:{} error".format(tempname)
+			return {"errmsg": msg, "errrlt": -1}
+
+	def createVMMonitor(self, vip, hip, tpname=None):
+		'''
+		Create virtual monitor item
+		@param vip string virtual ip addr
+		@param hip string host ip addr
+		@param tpname string template name
+		'''
+		templateid = self.getTemplateid(tpname)['templateid']
+		groupid = self.getHostGroupid('Libvirt VMS')['groupid']
+		macroValue = str(vip)
+		print groupid, templateid
+		data = json.dumps(
+			{
+			    "jsonrpc": "2.0",
+			    "method": "host.create",
+			    "params": {
+				    "host": vip,
+				    "interfaces":[
+						{
+						  "type": 1,
+						  "main": 1,
+						  "useip": 1,
+						   "ip": hip,
+						   "dns": "",
+						   "port": "10050"
+		                }
+					],
+					"groups": [
+							{
+							  "groupid": groupid
+							}
+					],
+					"templates": [
+						{
+						  "templateid": templateid
+						}
+					],
+					"macros": [
+						{
+						  "macro": '{$HOSTIP}',
+		                  "value": macroValue
+						}
+					],
+				},
+			    "auth": self.authID,
+			    "id": 1
+			})
+		res = self.getData(data)['result']
+		if (res != 0) and (len(res) != 0):
+			return  res
+		else:
+			msg = "Create vm monitor  {} error".format(vip)
+			return {"errmsg": msg, "errrlt": -1}
+
+	def deleteVMMonitor(self, vip=None):
+		'''
+		Delete virtual monitor
+		@param vip string virtual ip addr
+		'''
+		vhostid = self.getHostId(vip)
+		data = json.dumps(
+				{
+				 "jsonrpc": "2.0",
+			    "method": "host.delete",
+			    "params": [vhostid],
+			    "auth": self.authID,
+			    "id": 1
+				})
+		res = self.getData(data)['result']
+		if (res != 0) and (len(res) != 0):
+			return  res
+		else:
+			msg = "delete vm monitor  {} error".format(vip)
+			return {"errmsg": msg, "errrlt": -1}
+
 	def __repr__(self):
 		return '<PhyBase : %s>' %(getattr(self, 'url', 'unknown'))
 	
 
 	
 def main():
+	import pprint
 	#hip = "192.168.43.204"
 	hip = "10.66.32.19"
 	#Z = PhyBase(hostip="10.66.49.19")
 	Z = PhyBase(hostip=hip)
 	print Z
+	pprint.pprint(Z.getTemplateid())
+	print Z.getHostGroupid()
+	# print Z.createVMMonitor('10.66.32.69', '10.66.32.20', 'Template Libvirt VM Status')
+	# print Z.deleteVMMonitor('10.66.32.69')
+	pprint.pprint(Z.getAllHost())
+	sys.exit("over")
 	#rlt = Z.getAllHost()
 	########Z.hostsPickle(rlt) # write to pickle file if you need not to add  new host , never run it 
 	#print Z.checkValidHost("10.66.49.19")

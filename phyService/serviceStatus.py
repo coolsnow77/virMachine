@@ -12,18 +12,24 @@ class ServiceStatus(ServiceBase):
     '''
 
 
-    def __init__(self, hostip="None"):
+    def __init__(self, hostip=None):
         '''
         Constructor
         '''
         super(ServiceStatus, self).__init__(hostip=hostip)
         self.hostip = hostip
+        if hostip is None:
+            self.hostip = 'localhost'
         self.hostData = self.getHostData()
         
     
     def getMonitorService(self):
         ' 获取当前主机的监控服务项目'
         return self.hostData['services']
+
+    def getAllHosts(self):
+        rlt = self.getAllHost()
+        return rlt    
         
     def getWebStatus(self, mkey='incitoWeb'):
         ' get InctioWebStatus'
@@ -255,6 +261,10 @@ class ServiceStatus(ServiceBase):
             if  self.checkKeyValid(comStat['services'], mkey=mkey):
                 rlt = self.getServiceData()
                 rltKey=self.checkKeyValid(rlt, mkey, flag=1)
+                if rlt[rltKey]['current_state'] == '0':
+                    rlt[rltKey]['current_state'] = 'OK'
+                else:
+                    rlt[rltKey]['current_state'] = 'Critical'
                 return rlt[rltKey]
             else:
                 print "no such  monitor service: %s" %mkey

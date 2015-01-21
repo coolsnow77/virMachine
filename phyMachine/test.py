@@ -14,8 +14,8 @@ class TestBase(unittest.TestCase):
     classdocs
     '''
     def setUp(self):
-        self.cpu = PhyCpuUtil(hostip='10.66.49.176')
-        self.mysys = PhySystemStatus(hostip='10.66.49.19')
+        self.cpu = PhyCpuUtil(hostip='10.66.32.19')
+        self.mysys = PhySystemStatus(hostip='10.66.32.19')
         
     def tearDown(self):
         pass
@@ -27,6 +27,14 @@ class PhyCpuUtilTest(TestBase):
     def testgetProcessLoad1min(self):
         rlt = self.cpu.getProcessLoad1min()
         self.assertTrue(isinstance(rlt, dict), "Test getProcessLoad1min() error")
+
+    def testgetValueByMonitorKey(self):
+        rlt = self.cpu.getValueByMonitorKey('agent.ping')
+        self.assertTrue(isinstance(rlt, dict), "Test getValueByMonitorKey() error")
+
+    def testGetMonitorKeys(self):
+        rlt = self.cpu.getMonitorKeys()
+        self.assertTrue(isinstance(rlt, list), "Test getMonitorKeys error!")
     
     def testgetProcessLoad5min(self):
         rlt = self.cpu.getProcessLoad5min()
