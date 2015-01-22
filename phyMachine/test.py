@@ -31,6 +31,21 @@ class PhyCpuUtilTest(TestBase):
     def testgetValueByMonitorKey(self):
         rlt = self.cpu.getValueByMonitorKey('agent.ping')
         self.assertTrue(isinstance(rlt, dict), "Test getValueByMonitorKey() error")
+    
+    def testcreate_vm_monitor(self, vip=None, tpname='Template Libvirt VM Status'):
+        "create  virtual ip address monitor"
+        " before test , you must set vip value"
+        vip = '10.66.32.69'
+        rlt = self.cpu.create_vm_monitor(vip, 'Template Libvirt VM Status')
+        self.assertTrue(isinstance(rlt, map),  "Test create_vm_monitor error")
+        
+    def testdelete_vm_monitor(self, vip=None):
+        """
+        Delete virtual monitor
+        """
+        vip = '10.66.32.69'
+        rlt = self.cpu.delete_vm_monitor(vip)
+        self.assertTrue(isinstance(rlt, map), "Test delete vm monitor error")
 
     def testGetMonitorKeys(self):
         rlt = self.cpu.getMonitorKeys()

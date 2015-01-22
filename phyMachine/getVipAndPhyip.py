@@ -8,6 +8,9 @@ from subprocess import Popen, PIPE
 import MySQLdb
 
 
+class MonitorError(Exception):
+    pass
+
 class IpAndVip(object):
     """
     Get all virtual ip on computer node,
@@ -206,8 +209,12 @@ class IpAndVip(object):
         return hostip string, hostip address
         '''
         data = self.get_vip_and_hostip()
-        hostip = [data[hip] for hip in data if vip in hip][0]
-        return hostip
+        try:
+            hostip = [data[hip] for hip in data if vip in hip][0]
+        except IndexError:
+            raise  MonitorError({'message': 'no such vip error', 'code': -1})
+        else:
+            return hostip
 
     def __del__(self):
         try:

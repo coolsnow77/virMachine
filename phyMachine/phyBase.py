@@ -154,7 +154,6 @@ class PhyBase(object):
 			})
 		res = self.getData(data)['result']
 		if (res != 0) and (len(res) != 0):
-			print res
 			hostList = [[r['host'], r['groups'][0]['name']]  for r in res
 					     if r['status'] == '0']
 			# resDict = {'phy': [], 'vm': [], 'sw': []}
@@ -191,7 +190,7 @@ class PhyBase(object):
 		
 		try:
 			res = self.getData(data)['result']
-		except TypeError:
+		except (TypeError, ValueError) :
 			return -1
 		
 		if (res != 0) and (len(res) != 0):
@@ -594,7 +593,7 @@ class PhyBase(object):
 			out = {item: res[0][item] for item in res[0] if item in['name', 'groupid']}
 			return  out
 		else:
-			msg = "get host group id:{} error".format(groupname)
+			msg = "get host group id:{} error, no groupname".format(groupname)
 			return {"errmsg": msg, "errrlt": -1}		
 
 	def getTemplateid(self, tempname='Template OS Linux'):
@@ -610,7 +609,6 @@ class PhyBase(object):
 					 "output": "extend",
 					 "filter":{
 							"host": [
-								"Template OS Linux",
 								 tempname
 								]
 							}
@@ -635,10 +633,14 @@ class PhyBase(object):
 		@param hip string host ip addr
 		@param tpname string template name
 		'''
-		templateid = self.getTemplateid(tpname)['templateid']
-		groupid = self.getHostGroupid('Libvirt VMS')['groupid']
+		try:
+			templateid = self.getTemplateid(tpname)['templateid']
+			groupid = self.getHostGroupid('Libvirt VMS')['groupid']
+		except KeyError as ke:
+			return {"errmsg": 'Create vm monitor error,'
+				    'no template or hostgroup:{}'.format(ke),"errrlt": -1}
 		macroValue = str(vip)
-		print groupid, templateid
+		# print groupid, templateid
 		data = json.dumps(
 			{
 			    "jsonrpc": "2.0",
@@ -687,7 +689,11 @@ class PhyBase(object):
 		Delete virtual monitor
 		@param vip string virtual ip addr
 		'''
-		vhostid = self.getHostId(vip)
+		msg = " delete vm monitor  {} error".format(vip)		
+		try:
+			vhostid = self.getHostId(vip)
+		except ValueError as err:
+			return {"errmsg": str(err) + msg, "errrlt": -1}
 		data = json.dumps(
 				{
 				 "jsonrpc": "2.0",
@@ -700,7 +706,6 @@ class PhyBase(object):
 		if (res != 0) and (len(res) != 0):
 			return  res
 		else:
-			msg = "delete vm monitor  {} error".format(vip)
 			return {"errmsg": msg, "errrlt": -1}
 
 	def __repr__(self):
@@ -717,9 +722,9 @@ def main():
 	print Z
 	pprint.pprint(Z.getTemplateid())
 	print Z.getHostGroupid()
-	# print Z.createVMMonitor('10.66.32.69', '10.66.32.20', 'Template Libvirt VM Status')
-	# print Z.deleteVMMonitor('10.66.32.69')
-	pprint.pprint(Z.getAllHost())
+	#print Z.createVMMonitor('10.66.32.69', '10.66.32.20', 'Template Libvirt VM Status')
+	#print Z.deleteVMMonitor('10.66.32.69')
+	# pprint.pprint(Z.getAllHost())
 	sys.exit("over")
 	#rlt = Z.getAllHost()
 	########Z.hostsPickle(rlt) # write to pickle file if you need not to add  new host , never run it 

@@ -25,6 +25,10 @@ class ServiceStatusTest(TestBase):
         rlt = self.s.getMonitorService()
         self.assertTrue(isinstance(rlt, list), "Test getMonitorService error")
     
+    def testgetAllHosts(self):
+        rlt = self.s.getMonitorService()
+        self.assertTrue(isinstance(rlt, list), "Test getAllHosts error")
+    
     def testgetHttpStatus(self):
         rlt = self.s.getHttpStatus()
         self.assertTrue(isinstance(rlt, dict), "Test getHttpStatus error")

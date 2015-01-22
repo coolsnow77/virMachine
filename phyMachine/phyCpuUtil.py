@@ -9,66 +9,78 @@ class PhyCpuUtil(PhyBase):
 
     def __init__(self, hostip=None): 
         super(PhyCpuUtil,self).__init__(hostip=hostip)
-        self.hid = self.getHostId(hostip)
+        self.hhostip = hostip
+        # self.hid = self.getHostId(hostip)
         # print 'init funcation hostip value', self.hostip
     
 
     def  getCpuSystemUtil(self):
         " get system cpu util info "
-        cpusysutil = self.getLastValue(self.hid, 'system.cpu.util[,system]')
+        hid = self.getHostId(self.hhostip)
+        cpusysutil = self.getLastValue(hid, 'system.cpu.util[,system]')
         return cpusysutil
     
     def getPeriodCpuSystemUtil(self,timeFrom,timeUntil):
         " get one period  cpu system  info"
-        periodCpuSys = self.getPeriodValue(self.hid, 'system.cpu.util[,system]',
+        hid = self.getHostId(self.hhostip)
+        periodCpuSys = self.getPeriodValue(hid, 'system.cpu.util[,system]',
                                                         timeFrom, timeUntil)
         return periodCpuSys
         
     def getPeriodCpuIdleUtil(self,timeFrom, timeUntil):
         " get period  cpu  idle  util"
-        periodCpuIdle = self.getPeriodValue(self.hid, 'system.cpu.util[,idle]',
+        hid = self.getHostId(self.hhostip)
+        periodCpuIdle = self.getPeriodValue(hid, 'system.cpu.util[,idle]',
                                                         timeFrom, timeUntil)
         return periodCpuIdle
 
     def getCpuUserUtil(self):
         " 获取用户占用cpu 信息 "
-        cpuuserutil = self.getLastValue(self.hid, 'system.cpu.util[,user]')
+        hid = self.getHostId(self.hhostip)
+        cpuuserutil = self.getLastValue(hid, 'system.cpu.util[,user]')
         return cpuuserutil
 
     def getCpuIdleUtil(self):
         " get idle cpu info "
-        cpuidleutil = self.getLastValue(self.hid, 'system.cpu.util[,idle]')
+        hid = self.getHostId(self.hhostip)
+        cpuidleutil = self.getLastValue(hid, 'system.cpu.util[,idle]')
         return cpuidleutil
 
     def getCpuDiskIOUtil(self):
         " get disk io load info "
-        cpudiskioutil = self.getLastValue(self.hid, 'system.cpu.util[,iowait]')
+        hid = self.getHostId(self.hhostip)
+        cpudiskioutil = self.getLastValue(hid, 'system.cpu.util[,iowait]')
         return cpudiskioutil
     
     def getProcessLoad1min(self, ):
         " get process load in average 1 min "
-        processload1min = self.getLastValue(self.hid, 'system.cpu.load[percpu,avg1]')
+        hid = self.getHostId(self.hhostip)
+        processload1min = self.getLastValue(hid, 'system.cpu.load[percpu,avg1]')
         return processload1min
     
-    def getProcessLoad5min(self, ):
+    def getProcessLoad5min(self):
         " get process load in average 5 min"
-        processload5min = self.getLastValue(self.hid, 'system.cpu.load[percpu,avg5]')
+        hid = self.getHostId(self.hhostip)
+        processload5min = self.getLastValue(hid, 'system.cpu.load[percpu,avg5]')
         return processload5min
     
     def getProcessLoad15min(self, ):
         " get process load in average 15 min"
-        processload15min = self.getLastValue(self.hid, 'system.cpu.load[percpu,avg15]')
+        hid = self.getHostId(self.hhostip)
+        processload15min = self.getLastValue(hid, 'system.cpu.load[percpu,avg15]')
         return processload15min
     
     def getMonitorKeys(self):
         ' get monitor key by host id'
-        rlt = self.getMonitorKeyByHostid(self.hid)
+        hid = self.getHostId(self.hhostip)
+        rlt = self.getMonitorKeyByHostid(hid)
         mkeys = [v['key_'] for v in rlt]
         return mkeys
     
     def getValueByMonitorKey(self,  mkey=None):
         " get Value by Monitor Key"
-        v = self.getLastValue(self.hid, mkey)
+        hid = self.getHostId(self.hhostip)
+        v = self.getLastValue(hid, mkey)
         return v
     
     def getTrendsValue(self, mkey, timeFrom, timeEnd):
@@ -77,6 +89,7 @@ class PhyCpuUtil(PhyBase):
         @param timeFrom,  start timestamp
         @param timeEnd,  end timestamp
         """
+        hid = self.getHostId(self.hhostip)
         timeFrom = int(timeFrom)
         timeEnd = int(timeEnd)
         #print type(timeFrom), timeFrom, timeEnd
@@ -85,11 +98,11 @@ class PhyCpuUtil(PhyBase):
         if (timeEnd - timeFrom) <= 10800: 
             "Hope never goes here " 
             # 3h = 10800 
-            v = self.getPeriodValue(self.hid, mkey, timeFrom, timeEnd)
+            v = self.getPeriodValue(hid, mkey, timeFrom, timeEnd)
             return v
         else:
             #print "goes here!", mkey
-            v = self.getPeriodValue2(self.hid, mkey, timeFrom, timeEnd)
+            v = self.getPeriodValue2(hid, mkey, timeFrom, timeEnd)
             return v
 
     def getHostipFromVip(self, vip):
@@ -122,6 +135,17 @@ class PhyCpuUtil(PhyBase):
          '''
         rlt = self.getAllHost()
         return rlt
+
+    def is_or_not_monitored(self, vip):
+        '''
+        Validate the machine  is  or not monitored
+        :param vip: virtial machine ip address
+        :return True if monitored , otherwise False
+        '''
+        if vip in self.get_all_hosts()['vm']:
+            return True
+        else:
+            return False
 
     def create_vm_monitor(self, vip, tpname='Template Libvirt VM Status'):
         '''
@@ -157,13 +181,14 @@ if __name__ == '__main__':
     #        t=PhyCpuUtil(hostip=h)
     #        print h, t.getProcessLoad15min()
     
-    t = PhyCpuUtil(hostip='10.66.49.176')
+    t = PhyCpuUtil(hostip='10.66.32.69')
     #t = PhyCpuUtil(hostip='192.168.43.203')
     import datetime, time,sys
     t1 = t.date2Timestamp("2014-11-19 16:00:00")
     t2 = int(time.time())
     print t1, t2
-    #sys.exit(1)
+    print t.is_or_not_monitored('10.66.32.69')
+    sys.exit(1)
     #print t.getPeriodCpuSystemUtil(t1, t2)
     #print t.getPeriodCpuIdleUtil(t.date2Timestamp("2014-10-15 01:00:00"), t.date2Timestamp("2014-10-15 17:00:00"))
     print t.getProcessLoad1min()
