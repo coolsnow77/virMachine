@@ -8,8 +8,11 @@ Created on 2014年12月2日
 #  pip install  xmltodict
 #  apt-get  -y  install  libguestfs-tools
 #  sudo  vim  /etc/sudoer  ,  last line  add "zabbix ALL=NOPASSWD:ALL"
-import sys
+# usermod  -G libvirtd,kvm,nova  zabbix 
 
+import re
+import sys
+import ConfigParser
 from time import sleep
 from subprocess import Popen, PIPE
 
@@ -28,7 +31,7 @@ finally:
 
 
 # The root of all libvirt errors.
-class libvirtError(Exception):
+class LibvirtError(Exception):
     def __init__(self, defmsg):
         err = None
         if err is None:
@@ -41,7 +44,7 @@ class libvirtError(Exception):
         self.err = err
 
 
-class VirtIPHost(object):
+class VirtIPHost2(object):
     """ Get VM ip address and  hostname
     """
     def __init__(self, params=None):
@@ -64,13 +67,98 @@ class VirtIPHost(object):
                     cont_list = cont.split(',')
                     ip_dict['ip_' + cont_list[2]] = {'mac': cont_list[0],
                                                      'ip': cont_list[2]}
+            print ip_dict
             return ip_dict
         except Exception as e:
-            raise libvirtError(str(e))
+            raise LibvirtError(str(e))
 
     @property
     def get_ips(self):
         return self.__ips
+
+
+#  new  modify
+
+class VirtIPHost(object):
+    """
+    Get virtual ip address and mac address
+    @rtype dict  e.g. {"ip_10.66.32.136": 
+                          {"ip": '10.66.32.136",
+                           "mac": "f2:2e:ef:ff:ff:ff"}
+                      }
+    """
+    def __init__(self):
+        self._nova_conf = '/etc/nova/nova.conf'
+        self.__ips = self._get_vip_and_mac()
+
+
+    def _cmd(self, command):
+        if sys.platform == 'win32':
+            close_fds = False
+        else:
+            close_fds = True
+        process = Popen(command, shell=True, stdout=PIPE, stderr=PIPE,
+                        close_fds=close_fds)
+        (stdout, stderr) = process.communicate()
+        if stderr:
+            print command
+            #import pdb;pdb.set_trace()
+            raise LibvirtError(stderr.strip())
+        if process.returncode != 0:
+            errmsg = "Return code from '%s' was %s." % ( 
+                command, process.returncode)
+            raise LibvirtError(errmsg)
+        return stdout   
+
+    def _get_domain_ids(self):
+        domain_ids = self._cmd('virsh list').split()[4:][::3]
+        return domain_ids
+
+    def _get_instance_id(self):
+        instance_uuid_list = list()
+        for did in self._get_domain_ids():
+            dominfo_com = 'virsh dominfo ' + did
+            rlt = self._cmd(dominfo_com).split()
+            instance_uuid_list.append(rlt[5].strip())
+        return instance_uuid_list
+
+    def _spawn_console_log_list(self):
+        cons_log = 'console.log'
+        conf = ConfigParser.ConfigParser()
+        conf.read(self._nova_conf)
+        state_path = conf.get('DEFAULT', 'state_path')
+        if state_path.endswith('/'):
+            console_log = state_path + 'instances/'
+        else:
+            console_log = state_path + '/instances/'
+        inst_uid_list = self._get_instance_id()
+        return [console_log+item+'/' + cons_log  for item in inst_uid_list]
+
+    def _get_vip_and_mac(self):
+        """
+        Get virtual and  mac address
+        """
+        ip_mac = dict()
+        try:
+            # pass
+            con_log_list = self._spawn_console_log_list()
+            for logfile in con_log_list:
+                with open(logfile) as fh:
+                    rlt = fh.read().split('\n')
+                    for line in rlt:
+                        if "ci-info" in line:
+                            rlt =  re.findall(r'((\d+.){3}\d+)(\s+\|\s+(\d+.){3}\d+\s+\|\s+)((\w{2}:){5}\w{2})', line)
+                            if rlt:
+                                ip_mac['ip_'+rlt[0][0]]={"ip": rlt[0][0], "mac": rlt[0][4]}
+                                break
+            return ip_mac
+        except Exception as e:
+            raise LibvirtError(str(e))
+
+    @property
+    def get_ips(self):
+        return self.__ips
+
 
 
 class VirtMetrics(object):
@@ -105,7 +193,7 @@ class VirtMetrics(object):
         " Init  memory  period "
         domid_list = self.__get_list_domain_id()
         if len(domid_list) < 1:
-            raise libvirtError("not instance run ")
+            raise LibvirtError("not instance run ")
         for did in domid_list:
             cmd = "virsh  dommemstat {0} --period 1000".format(did)
             fp = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
@@ -197,14 +285,14 @@ class VirtMetrics(object):
                          'userpercent': d3}
             return disk_dict
         except Exception as e:
-            raise ValueError(str(e))
+            raise ValueError(str(e),  "error")
 
     # cut it
     def get_disk2(self, ip=None):
         " Get disk info from virt-df"
         dom_id = self.__get_domain_id_by_ip(ip)
         if dom_id is None:
-            raise libvirtError("domain id or ip not exist")
+            raise LibvirtError("domain id or ip not exist")
         d_info = self.__get_disk_info(dom_id)
         return d_info
 
@@ -212,7 +300,7 @@ class VirtMetrics(object):
         " Get  disk  from  libvirt"
         dom_id = self.__get_domain_id_by_ip(ip)
         if dom_id is None:
-            raise libvirtError("domain id or ip not exist")
+            raise LibvirtError("domain id or ip not exist")
         vir_domain = self.conn.lookupByID(dom_id)
         dkey = 'domid_' + str(dom_id)
         dp = self.get_libvirt_path()[dkey]['diskPath']
@@ -224,7 +312,7 @@ class VirtMetrics(object):
         interval = self.interval
         dom_id = self.__get_domain_id_by_ip(ip)
         if dom_id is None:
-            raise libvirtError("domain id or ip not exist")
+            raise LibvirtError("domain id or ip not exist")
         vir_domain = self.conn.lookupByID(dom_id)
         dkey = 'domid_' + str(dom_id)
         dp = self.get_libvirt_path()[dkey]['diskPath']
@@ -240,7 +328,7 @@ class VirtMetrics(object):
         " get memory info"
         dom_id = self.__get_domain_id_by_ip(ip)
         if dom_id is None:
-            raise libvirtError("domain id or ip not exist")
+            raise LibvirtError("domain id or ip not exist")
         vir_domain = self.conn.lookupByID(dom_id)
         mem_info = vir_domain.memoryStats()
         return mem_info
@@ -250,7 +338,7 @@ class VirtMetrics(object):
         interval = self.interval
         dom_id = self.__get_domain_id_by_ip(ip)
         if dom_id is None:
-            raise libvirtError("domain id or ip not exist")
+            raise LibvirtError("domain id or ip not exist")
         mydom = self.conn.lookupByID(dom_id)
         nkey = 'domid_' + str(dom_id)
         np = self.get_libvirt_path()[nkey]['interfacePath']
@@ -268,7 +356,7 @@ class VirtMetrics(object):
         interval = self.interval
         dom_id = self.__get_domain_id_by_ip(ip)
         if dom_id is None:
-            raise libvirtError("domain id or ip not exist")
+            raise LibvirtError("domain id or ip not exist")
         mydom = self.conn.lookupByID(dom_id)
         cpu_info1 = {k: v/float(1000000000) for k,
                      v in mydom.getCPUStats(1)[0].items()}
@@ -326,7 +414,7 @@ class VirtMetrics(object):
         " disk root free"
         dom_id = self.__get_domain_id_by_ip(ip)
         if dom_id is None:
-            raise libvirtError("domain id or ip not exist")
+            raise LibvirtError("domain id or ip not exist")
         disk_free = self.__get_disk_info(dom_id)
         return disk_free.get('available', 0)
 
@@ -334,7 +422,7 @@ class VirtMetrics(object):
         " disk root free percentage "
         dom_id = self.__get_domain_id_by_ip(ip)
         if dom_id is None:
-            raise libvirtError("domain id or ip not exist")
+            raise LibvirtError("domain id or ip not exist")
         disk_pfree = self.__get_disk_info(dom_id)
         rlt = 1 - disk_pfree.get('userpercent', 0)
         return rlt
@@ -348,7 +436,7 @@ class VirtMetrics(object):
         " disk root used size "
         dom_id = self.__get_domain_id_by_ip(ip)
         if dom_id is None:
-            raise libvirtError("domain id or ip not exist")
+            raise LibvirtError("domain id or ip not exist")
         disk_pfree = self.__get_disk_info(dom_id)
         return disk_pfree.get('used', 0)
 
@@ -369,7 +457,7 @@ class VirtMetrics(object):
         try:
             self.conn.close()
         except ValueError:
-            raise libvirtError("close libvirt connection failed")
+            raise LibvirtError("close libvirt connection failed")
 
     def __repr2__(self):
         return self.__class__
@@ -380,7 +468,7 @@ if __name__ == '__main__':
     #fh.write("%s-%s-%s" %(sys.argv[0], sys.argv[1], sys.argv[2]))
     #fh.close()
     if len(sys.argv) < 3:
-        raise libvirtError("Not enough  arguments, argv >=3")
+        raise LibvirtError("Not enough  arguments, argv >=3")
     else:
         command, ip = sys.argv[1], sys.argv[2]
         # print command, ip
