@@ -9,6 +9,13 @@ import phyConfig as  zbconf
 import getVipAndPhyip 
 
 
+
+class MonitorError(Exception):
+        pass
+
+class MonitorAuthError(MonitorError):
+        pass
+
 class PhyBase(object):
 	"""
 	   the base level api
@@ -102,17 +109,23 @@ class PhyBase(object):
 			    "id": 1
 			    })
 		request = urllib2.Request(self.url,data)
+
 		for key in self.header:
 			request.add_header(key,self.header[key])
+
 		try:
-			result = urllib2.urlopen(request)
+			result = urllib2.urlopen(request, timeout=5)
 		except urllib2.URLError:
-			raise Exception("Network error!")
+			raise MonitorError("Network error: connect Monitor server failed!")
 		else:
 			response = json.loads(result.read())
 			result.close()
-			authID = response['result']
-			return authID
+                        try:
+			        authID = response['result']
+                        except KeyError:
+                                raise MonitorAuthError(response['error']['data'])
+			else:
+			        return authID
 
 	def getData(self,data, hostip=""):
 		''' get json rpc data '''
@@ -120,7 +133,7 @@ class PhyBase(object):
 		for key in self.header:
 			request.add_header(key,self.header[key])
 		try:
-			result = urllib2.urlopen(request)
+			result = urllib2.urlopen(request, timeout=5)
 		except urllib2.URLError as e:
 			if hasattr(e, 'reason'):
 				raise Exception("connect  api server error!")

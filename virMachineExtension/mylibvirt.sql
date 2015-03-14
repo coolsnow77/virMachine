@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50538
 File Encoding         : 65001
 
-Date: 2014-11-12 10:59:02
+Date: 2014-11-18 17:09:41
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -38,8 +38,9 @@ CREATE TABLE `libvirtDisk` (
   `timestamp` int(20) NOT NULL,
   `usage` bigint(20) DEFAULT NULL,
   `capacity` bigint(20) DEFAULT NULL,
-  PRIMARY KEY (`id`,`timestamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=67 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`id`,`timestamp`),
+  UNIQUE KEY `uuid_timestampkey` (`uuidstring`,`timestamp`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for libvirtMem
@@ -52,8 +53,9 @@ CREATE TABLE `libvirtMem` (
   `memTotal` bigint(20) DEFAULT NULL,
   `memSwap` bigint(20) DEFAULT NULL,
   `memRss` bigint(20) DEFAULT NULL,
-  PRIMARY KEY (`id`,`timestamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uuidTimestampKey` (`uuidstring`,`timestamp`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for libvirtParameter
@@ -65,5 +67,6 @@ CREATE TABLE `libvirtParameter` (
   `interUUID` varchar(50) DEFAULT NULL,
   `vInterfacePath` varchar(20) DEFAULT NULL,
   `vDiskPath` varchar(20) DEFAULT NULL,
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;

@@ -5,8 +5,15 @@ Created on 2014年10月20日
 @author: cuimingwen
 '''
 
-import os,sys,json, urllib2
+import os
+import sys
+import json
+import urllib2
+
 import serviceConfig
+
+class MonitorError(Exception):
+    pass
 
 class ServiceBase(object):
     '''
@@ -38,12 +45,9 @@ class ServiceBase(object):
             request.add_header(key,self.header[key])
         
         try:
-            result=urllib2.urlopen(request)
+            result=urllib2.urlopen(request, timeout=5)
         except urllib2.URLError :
-            #print "napi request url: %s error"%(url)
-            print "connect  server request  error"
-            sys.exit(-1)
-            #return -1
+            raise MonitorError("connect monitor server error")
         else:
             response = json.loads(result.read())
             result.close()
@@ -69,11 +73,10 @@ class ServiceBase(object):
                 #print "####",hostInfoList,"#####"
                 return hostInfoList
             else:
-                print hostRlt['content']
+                # print hostRlt['content']
                 return hostRlt['content']
         except TypeError as err:
-            print "HostData Type error: %s" %(str(err))
-            return -1
+            raise MonitorError("get service host data error!")
     
     def getServiceData(self):
         ' get service data '
@@ -89,8 +92,7 @@ class ServiceBase(object):
             else:
                 return servRlt['content']
         except TypeError as e:
-            print "ServiceData Type error: %s"%(str(e))
-            return -1
+            raise MonitorError("get service data error!")
         
     def printDict(self, mydict):
         try:
@@ -106,4 +108,3 @@ if __name__ == '__main__':
     nInstance = ServiceBase(hostip="10.66.32.21")
     print nInstance.getHostData()
     print nInstance.getServiceData()
-    

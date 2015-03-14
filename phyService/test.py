@@ -23,6 +23,7 @@ class ServiceStatusTest(TestBase):
     
     def testgetMonitorService(self):
         rlt = self.s.getMonitorService()
+        print rlt
         self.assertTrue(isinstance(rlt, list), "Test getMonitorService error")
     
     def testgetAllHosts(self):
