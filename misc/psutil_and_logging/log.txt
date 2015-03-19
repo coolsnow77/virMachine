@@ -1,0 +1,85 @@
+2015-03-19 07:31:14,621 mylogging_module.py 52 DEBUG Information debug calling f()
+2015-03-19 07:31:47,326 mylogging_module.py 52 DEBUG Information debug calling f()
+2015-03-19 07:31:47,326 mylogging_module.py 34 INFO -----glist[5] f
+2015-03-19 07:31:47,326 mylogging_module.py 38 INFO -----g
+2015-03-19 07:31:47,326 mylogging_module.py 42 INFO info h
+2015-03-19 07:31:47,326 mylogging_module.py 47 INFO ---i fun
+2015-03-19 07:33:34,779 mylogging_module.py 52 DEBUG Information debug calling f()
+2015-03-19 07:33:34,779 mylogging_module.py 34 INFO -----glist[5] f
+2015-03-19 07:33:34,779 mylogging_module.py 38 INFO -----g
+2015-03-19 07:33:34,779 mylogging_module.py 42 INFO info h
+2015-03-19 07:33:34,779 mylogging_module.py 47 INFO ---i fun
+2015-03-19 07:33:58,095 mylogging_module.py 52 DEBUG Information debug calling f()
+2015-03-19 07:33:58,095 mylogging_module.py 34 INFO -----glist[5] f
+2015-03-19 07:33:58,095 mylogging_module.py 38 INFO -----g
+2015-03-19 07:33:58,095 mylogging_module.py 42 INFO info h
+2015-03-19 07:33:58,095 mylogging_module.py 47 INFO ---i fun
+2015-03-19 07:34:11,595 mylogging_module.py 53 DEBUG Information debug calling f()
+2015-03-19 07:34:11,595 mylogging_module.py 35 INFO -----glist[5] f
+2015-03-19 07:34:11,595 mylogging_module.py 39 INFO -----g
+2015-03-19 07:34:11,595 mylogging_module.py 43 INFO info h
+2015-03-19 07:34:11,595 mylogging_module.py 48 INFO ---i fun
+2015-03-19 07:35:02,903 mylogging_module.py 53 DEBUG Information debug calling f()
+2015-03-19 07:39:07,259 mylogging_module.py 55 DEBUG Information debug calling f()
+2015-03-19 07:39:07,259 mylogging_module.py 62 ERROR Exception-----
+2015-03-19 07:39:07,259 mylogging_module.py 63 CRITICAL object info: list index out of range
+2015-03-19 07:39:07,259 mylogging_module.py 64 CRITICAL Error type:<type 'exceptions.IndexError'>, information:list index out of range
+2015-03-19 07:39:07,259 mylogging_module.py 65 CRITICAL   File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 58, in <module>
+    t.f()
+  File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 36, in f
+    self.gList[5]
+
+2015-03-19 07:41:52,125 mylogging_module.py 61 DEBUG Information debug calling f()
+2015-03-19 07:41:52,125 mylogging_module.py 68 ERROR Exception-----
+2015-03-19 07:41:52,125 mylogging_module.py 69 CRITICAL object info: list index out of range
+2015-03-19 07:41:52,125 mylogging_module.py 70 CRITICAL Error type:<type 'exceptions.IndexError'>, information:list index out of range
+2015-03-19 07:41:52,125 mylogging_module.py 71 CRITICAL   File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 64, in <module>
+    t.f()
+  File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 42, in f
+    self.gList[5]
+
+2015-03-19 07:42:20,163 mylogging_module.py 61 DEBUG Information debug calling f()
+2015-03-19 07:42:20,163 mylogging_module.py 68 ERROR Exception-----
+2015-03-19 07:42:20,163 mylogging_module.py 69 CRITICAL object info: list index out of range
+2015-03-19 07:42:20,163 mylogging_module.py 70 CRITICAL Error type:<type 'exceptions.IndexError'>, information:list index out of range
+2015-03-19 07:42:20,163 mylogging_module.py 71 CRITICAL   File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 64, in <module>
+    t.f()
+  File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 42, in f
+    self.gList[5]
+
+2015-03-19 07:45:18,434 mylogging_module.py 64 DEBUG Information debug calling f()
+2015-03-19 07:45:18,450 mylogging_module.py 71 ERROR Exception-----
+2015-03-19 07:45:18,450 mylogging_module.py 72 CRITICAL object info: list index out of range
+2015-03-19 07:45:18,450 mylogging_module.py 73 CRITICAL Error type:<type 'exceptions.IndexError'>, information:list index out of range
+2015-03-19 07:45:18,450 mylogging_module.py 74 CRITICAL   File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 67, in <module>
+    t.f()
+  File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 45, in f
+    self.gList[5]
+
+2015-03-19 07:45:56,095 mylogging_module.py 64 DEBUG Information debug calling f()
+2015-03-19 07:45:56,095 mylogging_module.py 71 ERROR Exception-----
+2015-03-19 07:45:56,095 mylogging_module.py 72 CRITICAL object info: list index out of range
+2015-03-19 07:45:56,095 mylogging_module.py 73 CRITICAL Error type:<type 'exceptions.IndexError'>, information:list index out of range
+2015-03-19 07:45:56,095 mylogging_module.py 74 CRITICAL   File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 67, in <module>
+    t.f()
+  File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 45, in f
+    self.gList[5]
+
+2015-03-19 07:48:46,927 mylogging_module.py 63 DEBUG Information debug calling f()
+2015-03-19 07:48:46,927 mylogging_module.py 70 ERROR Exception-----
+2015-03-19 07:48:46,927 mylogging_module.py 71 CRITICAL object info: list index out of range
+2015-03-19 07:48:46,927 mylogging_module.py 72 CRITICAL Error type:<type 'exceptions.IndexError'>, information:list index out of range
+2015-03-19 07:48:46,927 mylogging_module.py 73 CRITICAL   File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 66, in <module>
+    t.f()
+  File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 44, in f
+    self.gList[5]
+
+2015-03-19 09:29:36,565 mylogging_module.py 63 DEBUG Information debug calling f()
+2015-03-19 09:29:36,604 mylogging_module.py 70 ERROR Exception-----
+2015-03-19 09:29:36,605 mylogging_module.py 71 CRITICAL object info: list index out of range
+2015-03-19 09:29:36,605 mylogging_module.py 72 CRITICAL Error type:<type 'exceptions.IndexError'>, information:list index out of range
+2015-03-19 09:29:36,605 mylogging_module.py 73 CRITICAL   File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 66, in <module>
+    t.f()
+  File "C:\eclipseProject\psutiltest\src\psutil_package\mylogging_module.py", line 44, in f
+    self.gList[5]
+
