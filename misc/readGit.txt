@@ -4,3 +4,17 @@ git add README.md
 git commit -m "first commit"
 git remote add origin https://github.com/coolsnow77/virMachine.git
 git push -u origin master
+
+
+
+
+# push  file
+git init
+git  push https://xxxxxxx
+git config --global user.email lanranzi@163.com
+git config --global user.name  lanranzi@163.com
+
+git  add  xxxx 
+git commit -m "msg"
+git push  -u origin master
+
