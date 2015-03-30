@@ -4,16 +4,20 @@
 
 from ConfigParser import ConfigParser
 
+import array
 import logging
 import MySQLdb
 import pprint
+import random
+import string
 import time
 
 
 _DB_MAP = {
     "openstack_keystone":{
        "user_sql": "select id, name, password from user",
-       "project_sql": "select id, name, description from project"
+       "project_sql": '''select id, name, description from 
+                       project where name not in ('admin', 'service')'''
        },
     "DEFAULT": {
        "user_sql": '''select id, userName, userPassword, roles,
@@ -22,6 +26,10 @@ _DB_MAP = {
                          projectManager, projectStatus, createTime, 
                          projectDescription from project_project'''}
 }
+
+user_pass_file = "user_pass.txt"
+fup = open(user_pass_file, "wb")
+fup.write("# please  change the horizon user pass with the user_pass.txt\n")
 
 class OpenStackDBError(Exception):
     pass
@@ -131,7 +139,8 @@ class MySQLOper(MySQLBase):
         keystone db 
         User---project list
         """
-
+        # select  name from role where id in (select role_id from assignment where 
+        # actor_id='b342759914fd4b67a715ed9c842966e7' and  target_id='d04ce62c23ae48f782aee09780dc0d85' )
         account_suffix = self.db_obj.get('user_info', 'email_default_suffix')
         if self.section == "DEFAULT":
             return False
@@ -151,17 +160,43 @@ class MySQLOper(MySQLBase):
             project_list = []
             user_id_list = list()
 
+            uid = row['id']
             for project_id in self.get_result(user_proj_list):
                 pid = project_id['target_id']
                 user_own_project_name = """ select id, name from project
                                       where id = '%s'""" % (pid)
-                project_list.append(self.get_result(user_own_project_name)[0])
-            # print "\t\t", "name:", row['name']
+                # add role 
+                user_role_sql = '''select  name from role where id in (
+                                  select role_id from assignment where  
+                          actor_id='%s' and  target_id='%s')''' % (uid, pid)
+
+
+                user_role_rlt = self.get_result(user_role_sql)
+                roles= self.get_value_from_tuple_dict(user_role_rlt)
+                user_own_proj_dict = self.get_result(user_own_project_name)[0]
+                user_own_proj_dict.update({"roles": roles})
+                # print user_own_proj_dict
+
+                project_list.append(user_own_proj_dict)
+
+                # print "\t\t", "name:", row['name']
             user_id_list.append(row['id'])
             user_own_list.append({'user': {'username': row['name'],
                                   'project': project_list,
                                   'uid': user_id_list}})
         return user_own_list
+
+    # get tuple map values
+    def get_value_from_tuple_dict(self, td):
+        # Get value from tuple dict 
+        return [ x['name'] for x in td ] 
+
+    def create_random_password(self, key_len=20):
+        array_a = array.array('c', (string.letters+string.digits))
+        tmp = array_a.tolist()
+        random.shuffle(tmp)
+        randPass = ''.join([ v  for i, v in enumerate(tmp) if i< key_len])
+        return randPass
 
     # iaasui db operation
 
@@ -201,6 +236,7 @@ class MySQLOper(MySQLBase):
         :rtype: True/False. 
         """
         userpass = self.db_obj.get('user_info', 'user_default_pass')
+        userpass = self.create_random_password()
 
         if self.section == "openstack_keystone":
             logging.error("insert_project -- section error:")
@@ -214,6 +250,11 @@ class MySQLOper(MySQLBase):
             return False 
 
         for role in ['admin', '_member_']:
+            # Filter the user with "incito.com.cn" 
+            account_suffix = self.db_obj.get('user_info',
+                                   'email_default_suffix')
+            if not  user.endswith(account_suffix):
+                continue
             uuser, upass, uroles, uctime = (user, userpass,
                        role, self.get_current_strtime())
     
@@ -221,6 +262,7 @@ class MySQLOper(MySQLBase):
                          roles, email, tel, createTime) values (
                          '%s', '%s', '%s', '%s', '%s', '%s')''' % (
                            uuser, upass, uroles, uuser, '', uctime)
+            fup.write("user: %s, password: %s\n" % ( uuser, upass))
             # print in_pro_sql
             rlt = self.get_result(in_pro_sql)
         return True 
@@ -239,8 +281,8 @@ class MySQLOper(MySQLBase):
         u_p_sql = ''' select user_id from project_user_user where user_id=
                       %d and project_id=%d ''' % (uid, pid)
         if self.get_result(u_p_sql):
-            logging.warning("insert_user_project_relation error: uid, %s
-                            pid, %s exists") % (uid, pid)
+            logging.warning("insert_user_project_relation error: uid, %d"
+                            " pid, %d exists" % (uid, pid))
             return False
 
         # off foreign_key_check
@@ -254,37 +296,42 @@ class MySQLOper(MySQLBase):
 
 if __name__ == "__main__":
     # 1. keystone  user list 
+    print "############## user list start----------------"
     key_obj = MySQLOper()
     key_user_list = key_obj.get_user_list()
     pprint.pprint( key_user_list )
 
     # 2. keystone project list
+    print "############## project list start----------------"
     key_project_list = key_obj.get_project_list()
     pprint.pprint( key_project_list )
 
     # 3. keystone user own project list
+    print "############## user own project list start----------------"
     user_own_project_list = key_obj.user_own_project_list()
     pprint.pprint( user_own_project_list )
 
     # 4. insert iaasui project_user
+    print "############## insert user  list start----------------"
     ui_obj = MySQLOper('DEFAULT')
     for user in key_user_list:
         # print user
-        ui_obj.insert_user(user)
+        ui_obj.insert_user(user['name'])
 
     # 5. insert iaasui project_project
+    print "############## insert project  list start----------------"
     for project in key_project_list:
         print 'pname: %s, pdesc: %s' % (project['name'],
                                         project['description']) 
         ui_obj.insert_project(project['name'], project['description'])
 
     # 6. insert iaasui project_user_user for user_project relation
+    print "############## insert user own  project  list start----------------"
     for user_project in user_own_project_list:
         # pprint.pprint( user_project )
         print "user: %s, project: %s" % (user_project['user']['username'],
                                          user_project['user']['project'])
-        user_project_map = dict()
-        user_id_sql = '''select id from project_user where userName='%s' '''%(
+        user_id_sql = '''select id, roles from project_user where userName='%s' '''%(
 			user_project['user']['username'])
         uid_list = ui_obj.get_result(user_id_sql)
 
@@ -294,13 +341,26 @@ if __name__ == "__main__":
                          projectName = '%s' ''' % ( pname['name'])
             pid_list = ui_obj.get_result(project_id_sql)
 
+
+            # write roles admin or _member_
+            # ro >=2 role-- admin else role -- member
+            ro = pname['roles']
+
             # print uid_list, pid_list
             # insert iaasui project_user_user( the last result)
             for uid in uid_list:
                 for pid in pid_list:
-                    print uid, pid
-                    logging.info("uid: %s, pid: %s") % (uid, pid)
-                    ui_obj.insert_user_project_relation(uid, pid)
+                    print uid, pid, uid['roles']
+
+                    # ro >=2 role-- admin else role -- member
+                    if len(ro) >=2 and uid['roles'] == "admin":
+                        # pass
+                        logging.info("uid: %s, pid: %s" % (uid['id'], pid['id']))
+                        ui_obj.insert_user_project_relation(uid['id'], pid['id'])
+                    elif len(ro) ==1 and uid['roles'] == "_member_":
+                        logging.info("uid: %s, pid: %s" % (uid['id'], pid['id']))
+                        ui_obj.insert_user_project_relation(uid['id'], pid['id'])
 
     print '^_^ ' * 30
     print "########## database dump  succeed, please check !!!"
+    fup.close()
